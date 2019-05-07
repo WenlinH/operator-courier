@@ -107,7 +107,7 @@ class VerifiedManifest:
         for version, manifest_files_content in manifests.items():
             bundle_dict = BuildCmd().build_bundle(manifest_files_content)
             if version != FLAT_KEY:
-                logger.info("Parsing version: %s", version)
+                print("Parsing version: %s", version)
             _, validation_dict_temp = ValidateCmd(ui_validate_io, self.nested) \
                 .validate(bundle_dict, repository)
             for log_level, msg_list in validation_dict_temp.items():

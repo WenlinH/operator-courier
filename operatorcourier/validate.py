@@ -13,7 +13,7 @@ from .const_io import (
 logger = logging.getLogger(__name__)
 
 
-class ValidateCmd():
+class ValidateCmd:
     dataKey = "data"
     crdKey = "customResourceDefinitions"
     csvKey = "clusterServiceVersions"
@@ -34,16 +34,22 @@ class ValidateCmd():
         screen for automation purposes
          :param message: The message to log
         """
-        self.validation_json['warnings'].append(message % args)
+        if yaml_type and yaml_name:
+            message = f'[{yaml_type}_{yaml_name}] {message}'
+
+        self.validation_json['warnings'].append(message)
         logger.warning(message, *args, **kwargs)
 
-    def _log_error(self, message, *args, **kwargs):
+    def _log_error(self, message, yaml_type, yaml_name, *args, **kwargs):
         """_log_error prints the message to the logger as an error
         and appends it to a dictionary that can be printed to the
         screen for automation purposes
          :param message: The message to log
         """
-        self.validation_json['errors'].append(message % args)
+        if yaml_type and yaml_name:
+            message = f'[{yaml_type}_{yaml_name}] {message}'
+
+        self.validation_json['errors'].append(message)
         logger.error(message, *args, **kwargs)
 
     def validate(self, bundle, repository=None):
@@ -104,35 +110,40 @@ class ValidateCmd():
                 if "name" in crd["metadata"]:
                     logger.info("Evaluating crd %s", crd["metadata"]["name"])
                 else:
-                    self._log_error("crd metadata.name not defined.")
+                    self._log_error("crd metadata.name not defined.", self.crdKey, '')
                     valid = False
             else:
-                self._log_error("crd metadata not defined.")
+                self._log_error("crd metadata not defined.", self.crdKey, '')
                 valid = False
 
+            crd_name = crd["metadata"]["name"]
             if "apiVersion" not in crd:
-                self._log_error("crd apiVersion not defined.")
+                self._log_error("crd apiVersion not defined.", self.crdKey, crd_name)
                 valid = False
 
             if "spec" not in crd:
-                self._log_error("crd spec not defined.")
+                self._log_error("crd spec not defined.", self.crdKey, crd_name)
                 valid = False
             else:
                 if "names" not in crd['spec']:
-                    self._log_error("crd spec.names not defined.")
+                    self._log_error("crd spec.names not defined.", self.crdKey, crd_name)
                     valid = False
                 else:
                     if "kind" not in crd['spec']['names']:
-                        self._log_error("crd spec.names.kind not defined.")
+                        self._log_error("crd spec.names.kind not defined.",
+                                        self.crdKey, crd_name)
                         valid = False
                     if "plural" not in crd['spec']['names']:
-                        self._log_error("crd spec.names.plural not defined.")
+                        self._log_error("crd spec.names.plural not defined.",
+                                        self.crdKey, crd_name)
                         valid = False
                 if "group" not in crd['spec']:
-                    self._log_error("crd spec.group not defined.")
+                    self._log_error("crd spec.group not defined.",
+                                    self.crdKey, crd_name)
                     valid = False
                 if "version" not in crd['spec']:
-                    self._log_error("crd spec.version not defined.")
+                    self._log_error("crd spec.version not defined.",
+                                    self.crdKey, crd_name)
                     valid = False
 
         return valid

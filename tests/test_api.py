@@ -66,14 +66,14 @@ def test_make_bundle_invalid(yaml_files):
 
 
 @pytest.mark.parametrize('nested_source_dir', [
-    'tests/test_files/bundles/api/etcd_valid_nested_bundle',
-    'tests/test_files/bundles/api/etcd_valid_nested_bundle_with_random_folder',
-    'tests/test_files/bundles/api/prometheus_valid_nested_bundle',
-    'tests/test_files/bundles/api/prometheus_valid_nested_bundle_2',
+    'tests/test_files/bundles/nest/flat_bundle1',
+    # 'tests/test_files/bundles/api/etcd_valid_nested_bundle_with_random_folder',
+    # 'tests/test_files/bundles/api/prometheus_valid_nested_bundle',
+    # 'tests/test_files/bundles/api/prometheus_valid_nested_bundle_2',
 ])
 def test_valid_nested_bundles(nested_source_dir):
     verified_manifest = api.build_and_verify(source_dir=nested_source_dir)
-    assert verified_manifest.nested
+    assert not verified_manifest.nested
     assert verified_manifest.is_valid
 
 
