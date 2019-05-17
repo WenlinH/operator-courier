@@ -67,23 +67,18 @@ class VerifiedManifest:
             self.nested = True
             for manifest_path in manifest_paths:
                 manifest_dir_name = os.path.basename(manifest_path)
-
-                files_content = []
                 crd_files_info, csv_files_info = get_crd_csv_files_info(manifest_path)
-                for (_, file_content) in (crd_files_info + csv_files_info):
-                    files_content.append(file_content)
-                manifests[manifest_dir_name] = files_content
+                manifests[manifest_dir_name] = crd_files_info + csv_files_info
             for manifest_dir_name in manifests:
-                manifests[manifest_dir_name].append(pkg_path_and_content[1])
+                manifests[manifest_dir_name].append(pkg_path_and_content)
         # flat layout: collect all valid manifest files and add to FLAT_KEY entry
         elif pkg_path_and_content and csvs_path_and_content:
             logger.info('The source directory is in flat structure.')
             crd_files_info, csv_files_info = get_crd_csv_files_info(root_path)
-            files_content = [pkg_path_and_content[1]]
-            files_content.extend(
-                [file_content for (_, file_content) in (crd_files_info + csv_files_info)])
+            files_info = [pkg_path_and_content]
+            files_info.extend(crd_files_info + csv_files_info)
 
-            manifests[FLAT_KEY] = files_content
+            manifests[FLAT_KEY] = files_info
         else:
             msg = 'The source directory structure is not in valid flat or nested format,'\
                   'because no valid CSV file is found in root or manifest directories.'
@@ -108,8 +103,8 @@ class VerifiedManifest:
         bundle_dict = None
         # validate on all bundles files and combine log messages
         validation_dict = ValidateCmd(ui_validate_io).validation_json
-        for version, manifest_files_content in manifests.items():
-            bundle_dict = BuildCmd().build_bundle(manifest_files_content)
+        for version, manifest_files_info in manifests.items():
+            bundle_dict = BuildCmd().build_bundle(manifest_files_info)
             if version != FLAT_KEY:
                 logger.info("Parsing version: %s", version)
             _, validation_dict_temp = ValidateCmd(ui_validate_io, self.nested) \

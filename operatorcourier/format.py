@@ -2,6 +2,12 @@ import yaml
 from operatorcourier.build import BuildCmd
 
 
+DATA_KEY = 'data'
+CRD_KEY = 'customResourceDefinitions'
+CSV_KEY = 'clusterServiceVersions'
+PKG_KEY = 'packages'
+
+
 class _literal(str):
     pass
 
@@ -11,13 +17,13 @@ def _literal_presenter(dumper, data):
 
 
 def _get_empty_formatted_bundle():
-    return dict(
-        data=dict(
-            customResourceDefinitions='',
-            clusterServiceVersions='',
-            packages='',
-        )
-    )
+    return {
+        DATA_KEY: {
+            CRD_KEY: '',
+            CSV_KEY: '',
+            PKG_KEY: '',
+        }
+    }
 
 
 def format_bundle(bundle):
@@ -35,19 +41,19 @@ def format_bundle(bundle):
 
     yaml.add_representer(_literal, _literal_presenter)
 
-    if 'data' not in bundle:
+    if DATA_KEY not in bundle:
         return formattedBundle
 
     # Format data fields as string literals to match backend expected format
-    if bundle['data'].get('customResourceDefinitions'):
-        formattedBundle['data']['customResourceDefinitions'] = _literal(
-            yaml.dump(bundle['data']['customResourceDefinitions'],
+    if bundle[DATA_KEY].get(CRD_KEY):
+        formattedBundle[DATA_KEY][CRD_KEY] = _literal(
+            yaml.dump(bundle[DATA_KEY][CRD_KEY],
                       default_flow_style=False))
 
-    if 'clusterServiceVersions' in bundle['data']:
+    if CSV_KEY in bundle[DATA_KEY]:
         # Format description and alm-examples
         clusterServiceVersions = []
-        for csv in bundle['data']['clusterServiceVersions']:
+        for csv in bundle[DATA_KEY][CSV_KEY]:
             if csv.get('metadata', {}).get('annotations', {}).get('alm-examples'):
                 csv['metadata']['annotations']['alm-examples'] = _literal(
                     csv['metadata']['annotations']['alm-examples'])
@@ -58,12 +64,12 @@ def format_bundle(bundle):
             clusterServiceVersions.append(csv)
 
         if clusterServiceVersions:
-            formattedBundle['data']['clusterServiceVersions'] = _literal(
+            formattedBundle[DATA_KEY][CSV_KEY] = _literal(
                 yaml.dump(clusterServiceVersions, default_flow_style=False))
 
-    if bundle['data'].get('packages'):
-        formattedBundle['data']['packages'] = _literal(
-            yaml.dump(bundle['data']['packages'], default_flow_style=False))
+    if bundle[DATA_KEY].get(PKG_KEY):
+        formattedBundle[DATA_KEY][PKG_KEY] = _literal(
+            yaml.dump(bundle[DATA_KEY][PKG_KEY], default_flow_style=False))
 
     return formattedBundle
 
@@ -80,24 +86,22 @@ def unformat_bundle(formattedBundle):
 
     bundle = BuildCmd()._get_empty_bundle()
 
-    if 'data' not in formattedBundle:
+    if DATA_KEY not in formattedBundle:
         return bundle
 
-    if 'customResourceDefinitions' in formattedBundle['data']:
-        customResourceDefinitions = yaml.safe_load(
-            formattedBundle['data']['customResourceDefinitions'])
-        if customResourceDefinitions:
-            bundle['data']['customResourceDefinitions'] = customResourceDefinitions
+    if CRD_KEY in formattedBundle[DATA_KEY]:
+        crds_list = yaml.safe_load(formattedBundle[DATA_KEY][CRD_KEY])
+        if crds_list:
+            bundle[DATA_KEY][CRD_KEY] = crds_list
 
-    if 'clusterServiceVersions' in formattedBundle['data']:
-        clusterServiceVersions = yaml.safe_load(
-            formattedBundle['data']['clusterServiceVersions'])
-        if clusterServiceVersions:
-            bundle['data']['clusterServiceVersions'] = clusterServiceVersions
+    if CSV_KEY in formattedBundle[DATA_KEY]:
+        csvs_list = yaml.safe_load(formattedBundle[DATA_KEY][CSV_KEY])
+        if csvs_list:
+            bundle[DATA_KEY][CSV_KEY] = csvs_list
 
-    if 'packages' in formattedBundle['data']:
-        packages = yaml.safe_load(formattedBundle['data']['packages'])
-        if packages:
-            bundle['data']['packages'] = packages
+    if PKG_KEY in formattedBundle[DATA_KEY]:
+        packages_list = yaml.safe_load(formattedBundle[DATA_KEY][PKG_KEY])
+        if packages_list:
+            bundle[DATA_KEY][PKG_KEY] = packages_list
 
     return bundle
